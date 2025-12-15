@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 type GenerateRequest struct {
@@ -36,8 +37,8 @@ type CallbackRequest struct {
 }
 
 var (
-	callbackURL = os.Args[1] 
-	aiURL = os.Args[2]	
+	callbackURL = os.Args[1]
+	aiURL       = os.Args[2]
 )
 
 func main() {
@@ -60,7 +61,6 @@ func generateHandler(w http.ResponseWriter, r *http.Request) {
 	if !checkAIHealth() {
 		log.Println("AI service is NOT available")
 
-        // отвечаем OS что сервис недоступен
 		resp := GenerateResponse{
 			Status:       false,
 			ErrorMessage: "AI service is not reachable",
@@ -74,14 +74,15 @@ func generateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// --------------------------------
 
-	// Ответить сразу — как OutSystems хочет
 	resp := GenerateResponse{Status: true, ErrorMessage: ""}
 	out, _ := json.Marshal(resp)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(out)
 
-	// Асинхронно запустить тяжелый процесс
+	req.Text = strings.ReplaceAll(req.Text, "\r\n", " ")
+	req.Text = strings.ReplaceAll(req.Text, "\n", " ")
+
 	go processAsync(req)
 }
 
